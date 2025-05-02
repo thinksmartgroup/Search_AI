@@ -1,0 +1,152 @@
+{
+  "unknown": {
+    "used_prompts": [
+      "California chiropractor practice management software providers",
+      "EHR systems for chiropractic practices in California",
+      "Cloud chiropractic software for practices in California",
+      "chiropractic practice management software with billing features usa",
+      "HIPAA compliant EHR software for chiropractors US",
+      "top rated chiropractic practice management software comparison USA",
+      "automotive shop management systems Texas vendors",
+      "cloud based auto shop management software texas"
+    ],
+    "prompts": {
+      "California chiropractor practice management software providers": {
+        "last_page": 3,
+        "unique_entries": 3,
+        "completed": false
+      },
+      "EHR systems for chiropractic practices in California": {
+        "last_page": 3,
+        "unique_entries": 2,
+        "completed": false
+      },
+      "Cloud chiropractic software for practices in California": {
+        "last_page": 3,
+        "unique_entries": 0,
+        "completed": false
+      },
+      "chiropractic practice management software with billing features usa": {
+        "last_page": 3,
+        "unique_entries": 3,
+        "completed": false
+      },
+      "HIPAA compliant EHR software for chiropractors US": {
+        "last_page": 3,
+        "unique_entries": 2,
+        "completed": false
+      },
+      "top rated chiropractic practice management software comparison USA": {
+        "last_page": 3,
+        "unique_entries": 9,
+        "completed": false
+      },
+      "automotive shop management systems Texas vendors": {
+        "last_page": 3,
+        "unique_entries": 0,
+        "completed": false
+      },
+      "cloud based auto shop management software texas": {
+        "last_page": 3,
+        "unique_entries": 0,
+        "completed": false
+      }
+    }
+  },
+  "Find software vendors for chiropractors in California": {
+    "used_prompts": [
+      "California chiropractor practice management software providers",
+      "EHR systems for chiropractic practices in California",
+      "Cloud chiropractic software for practices in California"
+    ],
+    "prompts": {
+      "California chiropractor practice management software providers": {
+        "last_page": 0,
+        "unique_entries": 0,
+        "completed": false
+      },
+      "EHR systems for chiropractic practices in California": {
+        "last_page": 0,
+        "unique_entries": 0,
+        "completed": false
+      },
+      "Cloud chiropractic software for practices in California": {
+        "last_page": 0,
+        "unique_entries": 0,
+        "completed": false
+      }
+    }
+  },
+  "software vendors for chiropractors in united states": {
+    "used_prompts": [
+      "chiropractic practice management software with billing features usa",
+      "HIPAA compliant EHR software for chiropractors US",
+      "top rated chiropractic practice management software comparison USA"
+    ],
+    "prompts": {
+      "chiropractic practice management software with billing features usa": {
+        "last_page": 0,
+        "unique_entries": 0,
+        "completed": false
+      },
+      "HIPAA compliant EHR software for chiropractors US": {
+        "last_page": 0,
+        "unique_entries": 0,
+        "completed": false
+      },
+      "top rated chiropractic practice management software comparison USA": {
+        "last_page": 0,
+        "unique_entries": 0,
+        "completed": false
+      }
+    }
+  },
+  "software vendors for auto repair in texas": {
+    "used_prompts": [
+      "cloud based auto repair shop management software Texas",
+      "auto repair shop billing and invoicing software Texas",
+      "Texas auto repair shops digital vehicle inspection software"
+    ],
+    "prompts": {
+      "cloud based auto repair shop management software Texas": {
+        "last_page": 0,
+        "unique_entries": 0,
+        "completed": false
+      },
+      "auto repair shop billing and invoicing software Texas": {
+        "last_page": 0,
+        "unique_entries": 0,
+        "completed": false
+      },
+      "Texas auto repair shops digital vehicle inspection software": {
+        "last_page": 0,
+        "unique_entries": 0,
+        "completed": false
+      }
+    }
+  },
+  "find auto repair software vendors in texas": {
+    "used_prompts": [
+      "cloud-based auto repair shop management Texas",
+      "auto repair shop invoicing software Texas",
+      "auto repair shop customer management software Texas"
+    ],
+    "prompts": {
+      "cloud-based auto repair shop management Texas": {
+        "last_page": 0,
+        "unique_entries": 0,
+        "completed": false
+      },
+      "auto repair shop invoicing software Texas": {
+        "last_page": 0,
+        "unique_entries": 0,
+        "completed": false
+      },
+      "auto repair shop customer management software Texas": {
+        "last_page": 0,
+        "unique_entries": 0,
+        "completed": false
+      }
+    }
+  }
+}
