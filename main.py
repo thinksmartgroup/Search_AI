@@ -8,7 +8,7 @@ from prompt_tracker import (
     is_prompt_completed,
     update_prompt_progress
 )
-from logger import save_vendor_log  # ✅ Add this
+from logger import save_vendor_log  
 
 MAX_PROMPTS_PER_INTENT = 3
 
@@ -56,7 +56,7 @@ def run_pipeline(user_intent, industry):
 
                     parsed_vendors.append(vendor)
 
-            # ✅ Save all vendors to JSON (even if some are duplicates)
+            #  Save all vendors to JSON (even if some are duplicates)
             save_vendor_log(parsed_vendors, industry, prompt)
 
             if parsed_vendors:
