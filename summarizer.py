@@ -69,7 +69,10 @@ def summarize_and_extract_contact(url, prompt="", industry="", source_page=0):
             "[ {\"product\": \"ProductName\", \"platform\": \"Windows Server\"}, ... ]"
         )
 
-        response = model.generate_content(gemini_prompt)
+        response = model.generate_content(
+            gemini_prompt,
+            request_options={"timeout": 600}
+        )
         full_output = response.text.strip()
         products = extract_json_block(full_output)
 
