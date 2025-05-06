@@ -8,7 +8,10 @@
       "HIPAA compliant EHR software for chiropractors US",
       "top rated chiropractic practice management software comparison USA",
       "automotive shop management systems Texas vendors",
-      "cloud based auto shop management software texas"
+      "cloud based auto shop management software texas",
+      "secure optometry patient portal systems California",
+      "optometry practice management software California",
+      "auto repair shop management software with parts inventory Texas"
     ],
     "prompts": {
       "California chiropractor practice management software providers": {
@@ -47,6 +50,21 @@
         "completed": false
       },
       "cloud based auto shop management software texas": {
+        "last_page": 3,
+        "unique_entries": 0,
+        "completed": false
+      },
+      "secure optometry patient portal systems California": {
+        "last_page": 12,
+        "unique_entries": 4,
+        "completed": true
+      },
+      "optometry practice management software California": {
+        "last_page": 6,
+        "unique_entries": 2,
+        "completed": false
+      },
+      "auto repair shop management software with parts inventory Texas": {
         "last_page": 3,
         "unique_entries": 0,
         "completed": false
@@ -143,6 +161,18 @@
         "completed": false
       },
       "auto repair shop customer management software Texas": {
+        "last_page": 0,
+        "unique_entries": 0,
+        "completed": false
+      }
+    }
+  },
+  "software solutions provider in california for optometry": {
+    "used_prompts": [
+      "secure optometry patient portal systems California"
+    ],
+    "prompts": {
+      "secure optometry patient portal systems California": {
         "last_page": 0,
         "unique_entries": 0,
         "completed": false

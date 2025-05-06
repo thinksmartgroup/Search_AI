@@ -3,13 +3,14 @@ import gspread
 from dotenv import load_dotenv
 from oauth2client.service_account import ServiceAccountCredentials
 from urllib.parse import urlparse
+import json
 
 # Load environment variables
 load_dotenv()
 
 # Load spreadsheet URLs
 INDUSTRY_SHEET_MAP = {
-    "chiropractic": os.getenv("CHIROPRACTIC_SHEET_URL"),
+    "chiropractic": os.getenv("CHIRO_SHEET_URL"),
     "optometry": os.getenv("OPTOMETRY_SHEET_URL"),
     "auto repair": os.getenv("AUTO_REPAIR_SHEET_URL"),
 }
@@ -40,32 +41,32 @@ def get_sheet_by_industry(industry):
 def update_google_sheet(vendors, industry):
     sheet = get_sheet_by_industry(industry)
     existing_rows = sheet.get_all_records()
-    
-    existing_entries = set()
+
+    existing_products = set()
     for row in existing_rows:
-        key = (normalize_url(row.get("Website", "")), row.get("Email", "").lower())
-        existing_entries.add(key)
+        product_name = row.get("product", "").strip().lower()
+        if product_name:
+            existing_products.add(product_name)
 
     headers = sheet.row_values(1)
     new_rows = []
 
     for vendor in vendors:
-        norm_key = (
-            normalize_url(vendor.get("Website", "")),
-            vendor.get("Email", "").lower()
-        )
-        if norm_key in existing_entries:
+        product_name = vendor.get("product", "").strip().lower()
+        if not product_name or product_name in existing_products:
             continue
 
-        # Add any new headers
-        for key in vendor.keys():
-            if key not in headers:
-                headers.append(key)
-                sheet.update_cell(1, len(headers), key)
+    # Add missing headers
+    for key in vendor.keys():
+        if key not in headers:
+            headers.append(key)
+            sheet.update_cell(1, len(headers), key)
 
-        row = [vendor.get(header, "") for header in headers]
-        new_rows.append(row)
-        existing_entries.add(norm_key)
+    row = [ json.dumps(vendor[header]) if isinstance(vendor.get(header), (list, dict)) else vendor.get(header, "")
+            for header in headers]
+    new_rows.append(row)
+    existing_products.add(product_name)
+
 
     if new_rows:
         sheet.append_rows(new_rows, value_input_option="USER_ENTERED")
