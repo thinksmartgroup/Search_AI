@@ -11,7 +11,9 @@
       "cloud based auto shop management software texas",
       "secure optometry patient portal systems California",
       "optometry practice management software California",
-      "auto repair shop management software with parts inventory Texas"
+      "auto repair shop management software with parts inventory Texas",
+      "chiropractic practice automation software",
+      "chiropractic patient portal solutions"
     ],
     "prompts": {
       "California chiropractor practice management software providers": {
@@ -65,6 +67,16 @@
         "completed": false
       },
       "auto repair shop management software with parts inventory Texas": {
+        "last_page": 3,
+        "unique_entries": 0,
+        "completed": false
+      },
+      "chiropractic practice automation software": {
+        "last_page": 3,
+        "unique_entries": 0,
+        "completed": false
+      },
+      "chiropractic patient portal solutions": {
         "last_page": 3,
         "unique_entries": 0,
         "completed": false
@@ -173,6 +185,24 @@
     ],
     "prompts": {
       "secure optometry patient portal systems California": {
+        "last_page": 0,
+        "unique_entries": 0,
+        "completed": false
+      }
+    }
+  },
+  "chiropractic software vendors ": {
+    "used_prompts": [
+      "chiropractic practice automation software",
+      "chiropractic patient portal solutions"
+    ],
+    "prompts": {
+      "chiropractic practice automation software": {
+        "last_page": 0,
+        "unique_entries": 0,
+        "completed": false
+      },
+      "chiropractic patient portal solutions": {
         "last_page": 0,
         "unique_entries": 0,
         "completed": false
