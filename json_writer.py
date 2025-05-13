@@ -10,11 +10,17 @@ load_dotenv()
 
 # Define headers with all possible fields
 HEADERS = [
-    "website", "email", "phone", "summary", "industry",
-    "prompt", "source_page", "platform_type", "platform_score",
-    "company_name", "confidence_score", "is_primary_vendor",
-    "evidence", "products", "has_primary_products", "product_count",
-    "source", "title", "snippet"
+    "website",
+    "company_name",
+    "description",
+    "products",
+    "is_primary_vendor",
+    "confidence_score",
+    "evidence",
+    "industry",
+    "source",
+    "platform_type",
+    "platform_score"
 ]
 
 SHEET_URLS = {
@@ -42,16 +48,32 @@ def get_sheet_by_industry(industry):
     client = gspread.authorize(creds)
     return client.open_by_url(SHEET_URLS[industry]).sheet1
 
-def load_vendors_from_json(json_path):
-    """Load vendors from JSON file"""
-    with open(json_path, "r") as f:
-        data = json.load(f)
-    return data.get("vendors", [])
+def ensure_sheet_headers(sheet):
+    """Ensure sheet has correct headers"""
+    try:
+        current_headers = sheet.row_values(1)
+        if not current_headers or set(current_headers) != set(HEADERS):
+            print("⚠️ Fixing sheet headers...")
+            # Clear the sheet
+            sheet.clear()
+            # Add headers
+            sheet.insert_row(HEADERS, 1)
+            print("✅ Headers fixed")
+            return True
+        return False
+    except Exception as e:
+        print(f"❌ Error checking headers: {e}")
+        return False
 
 def update_google_sheet(vendors, industry):
     """Update Google Sheet with vendor data"""
     try:
         sheet = get_sheet_by_industry(industry)
+        
+        # Ensure headers are correct
+        ensure_sheet_headers(sheet)
+        
+        # Get existing data
         existing_rows = sheet.get_all_records()
         
         # Get existing websites for deduplication
@@ -87,12 +109,6 @@ def update_google_sheet(vendors, industry):
             row_list = [row.get(header, "") for header in HEADERS]
             new_rows.append(row_list)
         
-        # Update headers if needed
-        current_headers = sheet.row_values(1)
-        if not current_headers or current_headers != HEADERS:
-            sheet.clear()
-            sheet.insert_row(HEADERS, 1)
-        
         # Add new rows
         if new_rows:
             sheet.append_rows(new_rows, value_input_option="USER_ENTERED")
@@ -104,7 +120,17 @@ def update_google_sheet(vendors, industry):
             
     except Exception as e:
         print(f"❌ Error updating sheet: {e}")
-        return 0
+        print("Attempting to fix sheet...")
+        try:
+            # Try to fix the sheet by clearing and reinitializing
+            sheet.clear()
+            sheet.insert_row(HEADERS, 1)
+            print("✅ Sheet reinitialized with correct headers")
+            # Try the update again
+            return update_google_sheet(vendors, industry)
+        except Exception as e2:
+            print(f"❌ Failed to fix sheet: {e2}")
+            return 0
 
 def write_vendors_grouped_by_industry(vendors):
     """Write vendors to sheets grouped by industry"""
