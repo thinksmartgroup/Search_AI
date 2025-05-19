@@ -184,9 +184,13 @@ def get_deployment_models():
         }
     }
 
-def find_vendors_by_deployment(industry, deployment_model):
+def find_vendors_by_deployment(industry, deployment_model, retry_count=0, max_retries=5):
     """Find vendors for a specific deployment model"""
     try:
+        if retry_count >= max_retries:
+            print(f"\nReached maximum retry attempts ({max_retries}). Proceeding with current vendors.")
+            return
+
         deployment_info = get_deployment_models()[deployment_model]
         
         # Load previously found vendors
@@ -268,6 +272,24 @@ def find_vendors_by_deployment(industry, deployment_model):
                 
             valid_vendors.append(vendor)
         
+        # Save current vendors regardless of count
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        json_filename = f"vendor_logs/{industry}_{deployment_model}_{timestamp}.json"
+        os.makedirs("vendor_logs", exist_ok=True)
+        
+        with open(json_filename, "w") as f:
+            json.dump({"vendors": valid_vendors}, f, indent=2)
+        print(f"\nSaved {len(valid_vendors)} vendors to {json_filename}")
+        
+        # Print current vendors
+        print(f"\nCurrent vendors found ({len(valid_vendors)}):")
+        for vendor in valid_vendors:
+            print(f"\n{vendor['company_name']}")
+            print(f"Website: {vendor['website']}")
+            print(f"Description: {vendor['description'][:100]}...")
+            print(f"Products: {', '.join(vendor['products'])}")
+            print("-" * 80)
+        
         # Ensure we have exactly 10 vendors
         if len(valid_vendors) != 10:
             print(f"Warning: Got {len(valid_vendors)} unique vendors instead of 10")
@@ -275,10 +297,10 @@ def find_vendors_by_deployment(industry, deployment_model):
                 valid_vendors = valid_vendors[:10]
             else:
                 # If we have less than 10, try one more time with a different prompt
-                print("Retrying with a different prompt...")
-                return find_vendors_by_deployment(industry, deployment_model)
+                print(f"Retrying with a different prompt... (Attempt {retry_count + 1} of {max_retries})")
+                return find_vendors_by_deployment(industry, deployment_model, retry_count + 1, max_retries)
         
-        # Print results
+        # Print final results
         print(f"\nFound {len(valid_vendors)} {deployment_info['marking']} {deployment_info['name']} vendors for {industry}:")
         for vendor in valid_vendors:
             print(f"\n{deployment_info['marking']} {vendor['company_name']}")
@@ -302,21 +324,24 @@ def find_vendors_by_deployment(industry, deployment_model):
                 print(f"Hosting: {vendor['hosting_type']}")
             print("-" * 80)
             
-        # Save to JSON
-        timestamp = time.strftime("%Y%m%d_%H%M%S")
-        json_filename = f"vendor_logs/{industry}_{deployment_model}_{timestamp}.json"
-        os.makedirs("vendor_logs", exist_ok=True)
-        
-        with open(json_filename, "w") as f:
-            json.dump({"vendors": valid_vendors}, f, indent=2)
-        print(f"\nSaved results to {json_filename}")
-        
         # Save to Google Sheets
         written = update_google_sheet(valid_vendors, industry)
         print(f"Written {written} vendors to Google Sheets")
             
     except Exception as e:
         print(f"Error: {e}")
+        # Try to save any vendors we found before the error
+        if 'valid_vendors' in locals() and valid_vendors:
+            try:
+                timestamp = time.strftime("%Y%m%d_%H%M%S")
+                json_filename = f"vendor_logs/{industry}_{deployment_model}_error_{timestamp}.json"
+                os.makedirs("vendor_logs", exist_ok=True)
+                
+                with open(json_filename, "w") as f:
+                    json.dump({"vendors": valid_vendors, "error": str(e)}, f, indent=2)
+                print(f"\nSaved {len(valid_vendors)} vendors to {json_filename} before error")
+            except Exception as save_error:
+                print(f"Failed to save vendors after error: {save_error}")
         return []
 
 def run_pipeline(user_intent, industry):
