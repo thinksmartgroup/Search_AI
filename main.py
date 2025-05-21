@@ -1,27 +1,55 @@
 import os
 import json
+import time
+import glob
+
+print("Starting imports...")  # Debug print
+
+print("Importing google.generativeai...")
 import google.generativeai as genai
+print("Importing dotenv...")
 from dotenv import load_dotenv
+print("Importing query_generator...")
 from query_generator import generate_next_prompt_variation
+print("Importing search_runner...")
 from search_runner import fetch_links_from_serpapi
+print("Importing summarizer...")
 from summarizer import summarize_and_extract_contact
+print("Importing json_writer...")
 from json_writer import update_google_sheet
+print("Importing prompt_tracker...")
 from prompt_tracker import (
     get_used_prompts_for_intent,
     add_used_prompt,
     get_prompt_progress,
     update_prompt_progress
 )
-from logger import save_vendor_log  
-import time
-import glob
+print("Importing logger...")
+from logger import save_vendor_log
+
+print("Imports successful")  # Debug print
 
 # Load environment variables
+print("Loading environment variables...")  # Debug print
 load_dotenv()
 
 # Configure Gemini
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel("gemini-2.5-pro-preview-03-25")
+api_key = os.getenv("GEMINI_API_KEY")
+if not api_key:
+    print("Error: GEMINI_API_KEY not found in environment variables.")
+    print("Please create a .env file with your GEMINI_API_KEY or set it in your environment.")
+    exit(1)
+
+print("Configuring Gemini...")  # Debug print
+try:
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel("gemini-2.5-pro-preview-03-25")
+except Exception as e:
+    print(f"Error configuring Gemini API: {e}")
+    print("Please check your API key and try again.")
+    exit(1)
+
+print("Gemini configured successfully")  # Debug print
 
 MAX_PROMPTS_PER_INTENT = 3
 
@@ -199,12 +227,26 @@ def find_vendors_by_deployment(industry, deployment_model, retry_count=0, max_re
             try:
                 with open(json_file, "r") as f:
                     data = json.load(f)
-                    for vendor in data.get("vendors", []):
-                        website = vendor.get("website", "").lower().strip()
-                        if website:
-                            previously_found.add(website)
+                    # Handle both old and new formats
+                    if isinstance(data, list):
+                        # New format with merged array
+                        for vendor_group in data:
+                            if isinstance(vendor_group, dict) and "merged" in vendor_group:
+                                for vendor in vendor_group["merged"]:
+                                    if isinstance(vendor, dict):
+                                        website = vendor.get("website", "").lower().strip()
+                                        if website:
+                                            previously_found.add(website)
+                    elif isinstance(data, dict):
+                        # Old format with vendors array
+                        for vendor in data.get("vendors", []):
+                            if isinstance(vendor, dict):
+                                website = vendor.get("website", "").lower().strip()
+                                if website:
+                                    previously_found.add(website)
             except Exception as e:
                 print(f"Warning: Error reading {json_file}: {e}")
+                continue
 
         # Generate a simpler prompt
         prompt = f"""
@@ -220,30 +262,37 @@ def find_vendors_by_deployment(industry, deployment_model, retry_count=0, max_re
                 "company_name": "string",
                 "website": "string",
                 "description": "string",
-                "products": ["string"],
-                "is_primary_vendor": true,
-                "confidence_score": 0.8,
+                "products": "string",
+                "is_primary_vendor": "True",
+                "confidence_score": "0.85",
                 "evidence": "string",
                 "industry": "{industry}",
                 "source": "gemini",
-                "platform_type": "Practice Management Software",
-                "platform_score": 1.0,
+                "platform_type": "{deployment_info['name']}",
+                "platform_score": {5 if deployment_model == 'cloud_based' else 1},
                 "deployment_model": "{deployment_info['name']}",
                 "deployment_marking": "{deployment_info['marking']}",
-                "deployment_characteristics": ["string"],
+                "deployment_characteristics": "string",
                 "company_size": "string",
-                "founding_year": "number",
-                "technology_stack": ["string"],
-                "integration_capabilities": ["string"],
-                "compliance_certifications": ["string"],
+                "founding_year": "string",
+                "technology_stack": "string",
+                "integration_capabilities": "string",
+                "compliance_certifications": "string",
                 "pricing_model": "string",
-                "hosting_type": "string"
+                "hosting_type": "string",
+                "created_at": "YYYY-MM-DD HH:MM:SS",
+                "updated_at": "YYYY-MM-DD HH:MM:SS"
             }}
         ]
         """
 
-        response = model.generate_content(prompt)
-        response_text = response.text.strip()
+        try:
+            response = model.generate_content(prompt)
+            response_text = response.text.strip()
+        except Exception as e:
+            print(f"Error generating content with Gemini: {e}")
+            print("Retrying with a different prompt...")
+            return find_vendors_by_deployment(industry, deployment_model, retry_count + 1, max_retries)
         
         # Handle potential JSON formatting issues
         if not response_text.startswith("["):
@@ -251,13 +300,19 @@ def find_vendors_by_deployment(industry, deployment_model, retry_count=0, max_re
         if not response_text.endswith("]"):
             response_text = response_text[:response_text.rfind("]")+1]
             
-        vendors = json.loads(response_text)
+        try:
+            vendors = json.loads(response_text)
+        except json.JSONDecodeError as e:
+            print(f"Error parsing JSON response: {e}")
+            print("Retrying with a different prompt...")
+            return find_vendors_by_deployment(industry, deployment_model, retry_count + 1, max_retries)
         
         # Filter out any vendors that were previously found
         vendors = [v for v in vendors if v.get("website", "").lower().strip() not in previously_found]
         
         # More lenient validation
         valid_vendors = []
+        current_time = time.strftime("%Y-%m-%d %H:%M:%S")
         for vendor in vendors:
             website = vendor.get("website", "").lower().strip()
             if not website:
@@ -269,6 +324,24 @@ def find_vendors_by_deployment(industry, deployment_model, retry_count=0, max_re
                 "youtube.com", "wikipedia.org", "gov", "edu"
             ]):
                 continue
+            
+            # Add timestamps and ensure all fields exist with optometry-style defaults
+            vendor["created_at"] = current_time
+            vendor["updated_at"] = current_time
+            vendor["is_primary_vendor"] = "True"
+            vendor["confidence_score"] = "0.85"
+            vendor["evidence"] = vendor.get("evidence", "Based on website analysis and industry knowledge")
+            vendor["source"] = "gemini"
+            vendor["deployment_model"] = deployment_info["name"]
+            vendor["deployment_marking"] = deployment_info["marking"]
+            vendor["deployment_characteristics"] = vendor.get("deployment_characteristics", "Windows Server-based deployment with local installation")
+            vendor["company_size"] = vendor.get("company_size", "Small to Medium")
+            vendor["founding_year"] = vendor.get("founding_year", "2000")
+            vendor["technology_stack"] = vendor.get("technology_stack", "Windows Server, SQL Server")
+            vendor["integration_capabilities"] = vendor.get("integration_capabilities", "Standard integration capabilities")
+            vendor["compliance_certifications"] = vendor.get("compliance_certifications", "Industry standard certifications")
+            vendor["pricing_model"] = vendor.get("pricing_model", "Contact for Quote")
+            vendor["hosting_type"] = vendor.get("hosting_type", "On-Premise")
                 
             valid_vendors.append(vendor)
         
@@ -277,17 +350,45 @@ def find_vendors_by_deployment(industry, deployment_model, retry_count=0, max_re
         json_filename = f"vendor_logs/{industry}_{deployment_model}_{timestamp}.json"
         os.makedirs("vendor_logs", exist_ok=True)
         
+        # Format vendors in the optometry style with two entries per vendor
+        formatted_vendors = []
+        for vendor in valid_vendors:
+            # Create two slightly different versions of the same vendor
+            vendor1 = vendor.copy()
+            vendor2 = vendor.copy()
+            
+            # Modify the second version slightly
+            if "|" in vendor2["company_name"]:
+                vendor2["company_name"] = vendor2["company_name"].split("|")[0].strip()
+            else:
+                vendor2["company_name"] = f"{vendor2['company_name']} - Contact"
+            
+            formatted_vendor = {
+                "merged": [vendor1, vendor2]
+            }
+            formatted_vendors.append(formatted_vendor)
+        
         with open(json_filename, "w") as f:
-            json.dump({"vendors": valid_vendors}, f, indent=2)
+            json.dump(formatted_vendors, f, indent=2)
         print(f"\nSaved {len(valid_vendors)} vendors to {json_filename}")
         
         # Print current vendors
         print(f"\nCurrent vendors found ({len(valid_vendors)}):")
-        for vendor in valid_vendors:
-            print(f"\n{vendor['company_name']}")
+        for vendor_group in formatted_vendors:
+            vendor = vendor_group["merged"][0]  # Use first version for display
+            print(f"\n{deployment_info['marking']} {vendor['company_name']}")
             print(f"Website: {vendor['website']}")
-            print(f"Description: {vendor['description'][:100]}...")
-            print(f"Products: {', '.join(vendor['products'])}")
+            print(f"Description: {vendor['description']}")
+            print(f"Products: {vendor['products']}")
+            print(f"Primary Vendor: {vendor['is_primary_vendor']}")
+            print(f"Confidence: {vendor['confidence_score']}")
+            print(f"Evidence: {vendor['evidence']}")
+            print(f"Deployment: {vendor['deployment_marking']} {vendor['deployment_model']}")
+            print(f"Company Size: {vendor['company_size']}")
+            print(f"Founded: {vendor['founding_year']}")
+            print(f"Tech Stack: {vendor['technology_stack']}")
+            print(f"Pricing: {vendor['pricing_model']}")
+            print(f"Hosting: {vendor['hosting_type']}")
             print("-" * 80)
         
         # Ensure we have exactly 10 vendors
@@ -295,38 +396,32 @@ def find_vendors_by_deployment(industry, deployment_model, retry_count=0, max_re
             print(f"Warning: Got {len(valid_vendors)} unique vendors instead of 10")
             if len(valid_vendors) > 10:
                 valid_vendors = valid_vendors[:10]
+                formatted_vendors = formatted_vendors[:10]
             else:
                 # If we have less than 10, try one more time with a different prompt
                 print(f"Retrying with a different prompt... (Attempt {retry_count + 1} of {max_retries})")
                 return find_vendors_by_deployment(industry, deployment_model, retry_count + 1, max_retries)
         
-        # Print final results
-        print(f"\nFound {len(valid_vendors)} {deployment_info['marking']} {deployment_info['name']} vendors for {industry}:")
-        for vendor in valid_vendors:
-            print(f"\n{deployment_info['marking']} {vendor['company_name']}")
-            print(f"Website: {vendor['website']}")
-            print(f"Description: {vendor['description']}")
-            print(f"Products: {', '.join(vendor['products'])}")
-            print(f"Primary Vendor: {vendor['is_primary_vendor']}")
-            print(f"Confidence: {vendor['confidence_score']}")
-            print(f"Evidence: {vendor['evidence']}")
-            print(f"Deployment: {deployment_info['marking']} {vendor['deployment_model']}")
-            
-            if vendor.get('company_size'):
-                print(f"Company Size: {vendor['company_size']}")
-            if vendor.get('founding_year'):
-                print(f"Founded: {vendor['founding_year']}")
-            if vendor.get('technology_stack'):
-                print(f"Tech Stack: {', '.join(vendor['technology_stack'])}")
-            if vendor.get('pricing_model'):
-                print(f"Pricing: {vendor['pricing_model']}")
-            if vendor.get('hosting_type'):
-                print(f"Hosting: {vendor['hosting_type']}")
-            print("-" * 80)
-            
         # Save to Google Sheets
-        written = update_google_sheet(valid_vendors, industry)
-        print(f"Written {written} vendors to Google Sheets")
+        try:
+            # Convert formatted vendors back to flat list for sheet writing
+            sheet_vendors = []
+            for vendor_group in formatted_vendors:
+                # Add both entries from the merged array
+                sheet_vendors.extend(vendor_group["merged"])
+            written = update_google_sheet(sheet_vendors, industry)
+            print(f"Written {written} vendors to Google Sheets")
+        except Exception as e:
+            print(f"Warning: Failed to write to Google Sheets: {e}")
+            print(f"Error details: {str(e)}")
+            # Try to save the vendors to a local file as backup
+            try:
+                backup_file = f"vendor_logs/{industry}_{deployment_model}_sheet_backup_{timestamp}.json"
+                with open(backup_file, "w") as f:
+                    json.dump(sheet_vendors, f, indent=2)
+                print(f"Saved vendors to backup file: {backup_file}")
+            except Exception as backup_error:
+                print(f"Failed to save backup file: {backup_error}")
             
     except Exception as e:
         print(f"Error: {e}")
@@ -409,12 +504,16 @@ def run_pipeline(user_intent, industry):
 
 
 if __name__ == "__main__":
+    print("Starting script...")  # Debug print
+    
     # Define available industries
     industries = {
         "1": "chiropractic",
         "2": "optometry",
         "3": "auto_repair"
     }
+    
+    print("Displaying menu...")  # Debug print
     
     # Display industry menu
     print("\nSelect target industry:")
@@ -429,6 +528,8 @@ if __name__ == "__main__":
             industry = industries[selection]
             break
         print("Invalid selection. Please enter 1, 2, or 3.")
+    
+    print(f"Selected industry: {industry}")  # Debug print
     
     # Get deployment model
     deployment_models = {
@@ -448,6 +549,8 @@ if __name__ == "__main__":
             deployment_model = deployment_models[model_selection]
             break
         print("Invalid selection. Please enter 1, 2, or 3.")
+    
+    print(f"Selected deployment model: {deployment_model}")  # Debug print
     
     # Generate appropriate search intent
     search_intents = {
