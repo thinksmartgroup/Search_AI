@@ -23,27 +23,11 @@ SCOPES = [os.getenv("SCOPE_FEEDS"), os.getenv("SCOPE_DRIVE")]
 HEADERS = [
     "company_name",
     "website",
-    "description",
     "products",
-    "is_primary_vendor",
-    "confidence_score",
-    "evidence",
     "industry",
-    "source",
-    "platform_type",
-    "platform_score",
-    "deployment_model",
-    "deployment_marking",
-    "deployment_characteristics",
-    "company_size",
-    "founding_year",
-    "technology_stack",
-    "integration_capabilities",
-    "compliance_certifications",
-    "pricing_model",
-    "hosting_type",
-    "created_at",
-    "updated_at"
+    "confidence",
+    "evidence",
+    "source"
 ]
 
 def get_sheet_by_industry(industry):

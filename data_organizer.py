@@ -23,27 +23,11 @@ SHEET_URLS = {
 STANDARD_HEADERS = [
     "company_name",
     "website",
-    "description",
     "products",
-    "company_size",
-    "founding_year",
-    "pricing_model",
-    "platform_type",
-    "platform_score",
-    "deployment_model",
-    "deployment_characteristics",
-    "deployment_marking",
-    "hosting_type",
-    "technology_stack",
-    "integration_capabilities",
-    "compliance_certifications",
     "industry",
-    "is_primary_vendor",
-    "confidence_score",
+    "confidence",
     "evidence",
-    "source",
-    "created_at",
-    "updated_at"
+    "source"
 ]
 
 class DataOrganizer:
