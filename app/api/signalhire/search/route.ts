@@ -47,4 +47,8 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+}
+
+export async function GET() {
+  return NextResponse.json({ message: "SignalHire Search API is working!" });
 } 

@@ -28,6 +28,5 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  // Return all stored responses
-  return NextResponse.json(responses);
+  return NextResponse.json({ message: "SignalHire Callback API is working!" });
 } 
